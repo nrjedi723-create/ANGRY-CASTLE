@@ -1,0 +1,789 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANGRY ENGLISH - Capybara Castle</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap');
+
+:root {
+  --brown:#75421f;
+  --gold:#ffca45;
+  --cream:#fff6d9;
+  --green:#43a85b;
+  --purple:#7950b8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Nunito,sans-serif;color:#392c20;
+  background:linear-gradient(#7dd7ff,#e6f8ff 65%,#b8e99a);
+  min-height:100vh;overflow:hidden;
+}
+button{font:inherit;cursor:pointer;border:0}
+button:disabled{opacity:.6;cursor:default}
+#app{min-height:100vh;position:relative}
+.topbar{
+  position:absolute;top:10px;left:10px;right:10px;z-index:5;
+  display:flex;gap:8px;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;pointer-events:none
+}
+.pill{
+  background:#fff8e7;border:3px solid #dca54d;border-radius:18px;
+  padding:7px 13px;font-weight:900;box-shadow:0 4px 0 #9b672d;
+}
+.pill button{pointer-events:auto}
+#gameCanvas{width:100%;height:100vh;display:block;touch-action:none}
+.screen{
+  position:fixed;inset:0;z-index:20;display:flex;align-items:center;
+  justify-content:center;padding:16px;background:#321e1c99;overflow:auto
+}
+.hidden{display:none!important}
+.panel{
+  width:min(540px,100%);max-height:94vh;overflow:auto;text-align:center;
+  background:linear-gradient(#fffdf1,#ffebbc);border:5px solid #b87835;
+  border-radius:28px;padding:24px;box-shadow:0 12px 0 #76421f;
+}
+h1{font-size:clamp(30px,7vw,55px);line-height:1.05;margin:8px 0;color:#b64b2d}
+h2{margin:5px 0 12px;font-size:27px}
+.subtitle{font-weight:800;color:#72523b}
+.mascot{font-size:68px;line-height:1.3}
+.primary,.secondary{
+  color:white;font-weight:900;border-radius:15px;padding:13px 20px;
+  box-shadow:0 5px 0 #7a4521;margin:6px
+}
+.primary{background:linear-gradient(#69d776,#269346)}
+.secondary{background:linear-gradient(#b58be8,#7543ae)}
+.gold{background:linear-gradient(#ffda6d,#eea923);color:#593512}
+.question-box{
+  padding:18px;background:#fff9e8;border:4px solid #e8b65b;
+  border-radius:18px;margin:15px 0;font-weight:900;font-size:clamp(19px,4vw,27px);
+  line-height:1.35;overflow-wrap:anywhere
+}
+.options{display:grid;grid-template-columns:1fr;gap:10px}
+.option{
+  background:#fff;border:3px solid #d6a35e;border-radius:15px;padding:13px 10px;
+  color:#593b23;font-weight:900;font-size:17px;transition:transform .15s
+}
+.option:hover{transform:translateY(-2px);background:#fff2c7}
+.option.correct{background:#b7f2bc;border-color:#229b43}
+.option.wrong{background:#ffc5c5;border-color:#d83d3d}
+.feedback{min-height:28px;font-weight:900;margin-top:12px}
+.stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:12px 0}
+.stat{background:#fff5d9;border-radius:12px;padding:9px 14px;font-weight:900}
+.instructions{text-align:left;line-height:1.7;font-weight:700;padding-left:22px}
+#message{
+  position:absolute;top:76px;left:50%;transform:translateX(-50%);
+  z-index:4;background:#fff7dc;border:3px solid #dca54d;border-radius:16px;
+  padding:8px 15px;font-weight:900;text-align:center;max-width:90%;pointer-events:none
+}
+#report{width:min(680px,100%)}
+.report-list{text-align:left;line-height:1.9;font-weight:800}
+.small{font-size:13px;color:#765d46}
+@media(min-width:650px){
+  .options{grid-template-columns:1fr 1fr}
+  .option:last-child:nth-child(odd){grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="topbar">
+    <div class="pill">🏰 LEVEL <span id="level">1</span>/10</div>
+    <div class="pill">⭐ SCORE: <span id="score">0</span></div>
+    <div class="pill">🐦 BIRDS: <span id="birds">0</span></div>
+    <div class="pill"><button onclick="openMenu()">☰ MENU</button></div>
+  </div>
+
+  <div id="message">Answer the question to get a power bird!</div>
+
+  <!-- START SCREEN -->
+  <section id="startScreen" class="screen">
+    <div class="panel">
+      <div class="mascot">🐹 🐦 🏰</div>
+      <h1>ANGRY ENGLISH</h1>
+      <h2>CAPYBARA CASTLE</h2>
+      <p class="subtitle">English Challenge · Primary Year 4</p>
+      <div class="stats">
+        <div class="stat">🎯 10 Levels</div>
+        <div class="stat">📚 English Quiz</div>
+        <div class="stat">🏆 Earn Stars</div>
+      </div>
+      <button class="primary" onclick="startGame()">▶ START GAME</button>
+      <h3>HOW TO PLAY</h3>
+      <ol class="instructions">
+        <li>Answer an English question before each launch.</li>
+        <li>A correct answer earns a random power bird.</li>
+        <li>A wrong answer gives you a normal bird.</li>
+        <li>Drag the bird backwards, then release to launch it.</li>
+        <li>Knock down all the capybaras to complete the level!</li>
+      </ol>
+      <p class="small">Topics: Grammar, Vocabulary, Spelling and Reading.</p>
+    </div>
+  </section>
+
+  <!-- QUESTION SCREEN -->
+  <section id="questionScreen" class="screen hidden">
+    <div class="panel">
+      <div class="mascot">📚 🐦</div>
+      <h2>ENGLISH CHALLENGE!</h2>
+      <p class="subtitle">Choose the correct answer to earn a power bird.</p>
+      <div class="question-box" id="questionText"></div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <p class="small">Year 4 English · Three answer choices</p>
+    </div>
+  </section>
+
+  <!-- LEVEL INTRO -->
+  <section id="levelScreen" class="screen hidden">
+    <div class="panel">
+      <div class="mascot">🏰 🐹</div>
+      <h1 id="levelTitle">LEVEL 1</h1>
+      <p id="levelDescription" class="subtitle">Defeat all the capybaras!</p>
+      <button class="primary" onclick="beginLevel()">LET'S PLAY! 🚀</button>
+    </div>
+  </section>
+
+  <!-- END SCREEN -->
+  <section id="endScreen" class="screen hidden">
+    <div class="panel">
+      <div class="mascot" id="endMascot">🏆</div>
+      <h1 id="endTitle">LEVEL COMPLETE!</h1>
+      <p id="endText" class="subtitle"></p>
+      <div class="stats">
+        <div class="stat">⭐ Score: <span id="endScore">0</span></div>
+        <div class="stat">🐦 Birds: <span id="endBirds">0</span></div>
+        <div class="stat">📚 Correct: <span id="endCorrect">0</span></div>
+      </div>
+      <button class="primary" id="nextButton" onclick="nextLevel()">NEXT LEVEL ➜</button>
+      <button class="secondary" onclick="restartLevel()">↻ PLAY AGAIN</button>
+      <button class="secondary" onclick="showReport()">📋 RESULTS</button>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section id="menuScreen" class="screen hidden">
+    <div class="panel">
+      <h2>GAME MENU</h2>
+      <p>Choose an action.</p>
+      <button class="primary" onclick="resumeGame()">▶ RESUME</button>
+      <button class="secondary" onclick="restartLevel()">↻ RESTART LEVEL</button>
+      <button class="secondary" onclick="showReport()">📋 RESULTS</button>
+      <button class="secondary" onclick="backToStart()">⌂ MAIN MENU</button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="reportScreen" class="screen hidden">
+    <div class="panel" id="report">
+      <h2>🏆 GAME RESULTS</h2>
+      <p class="subtitle">ANGRY ENGLISH · CAPYBARA CASTLE</p>
+      <div class="stats">
+        <div class="stat">Total score: <span id="totalScore">0</span></div>
+        <div class="stat">Levels won: <span id="levelsWon">0</span>/10</div>
+      </div>
+      <div id="reportList" class="report-list"></div>
+      <button class="primary" onclick="closeReport()">CLOSE</button>
+      <button class="secondary" onclick="backToStart()">MAIN MENU</button>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   ENGLISH YEAR 4 QUESTION BANK
+   Every question has exactly three answer choices.
+========================================================= */
+const QUESTIONS = [
+ {q:"Choose the correct plural noun.",o:["Childs","Children","Childes"],a:1},
+ {q:"She _____ to school every day.",o:["go","goes","going"],a:1},
+ {q:"What is the opposite of 'happy'?",o:["Sad","Glad","Excited"],a:0},
+ {q:"Choose the correct spelling.",o:["Beautifull","Beautiful","Beutiful"],a:1},
+ {q:"The cat is hiding _____ the table.",o:["under","between","during"],a:0},
+ {q:"Yesterday, Ali _____ football.",o:["plays","play","played"],a:2},
+ {q:"Which word is an adjective?",o:["Quickly","Beautiful","Running"],a:1},
+ {q:"My mother _____ cooking dinner now.",o:["is","are","am"],a:0},
+ {q:"Sarah is my friend. _____ is kind.",o:["He","She","They"],a:1},
+ {q:"What is a synonym of 'big'?",o:["Tiny","Large","Short"],a:1},
+ {q:"There _____ three apples in the basket.",o:["is","am","are"],a:2},
+ {q:"Choose the correct punctuation.",o:["Where are you.","Where are you?","Where are you!"],a:1},
+ {q:"A person who teaches pupils is a _____.",o:["Doctor","Teacher","Farmer"],a:1},
+ {q:"The birds _____ flying in the sky.",o:["is","are","was"],a:1},
+ {q:"Which word is a verb?",o:["Jump","Blue","Table"],a:0},
+ {q:"I have _____ umbrella.",o:["a","an","the"],a:1},
+ {q:"The opposite of 'early' is _____.",o:["Late","Fast","Soon"],a:0},
+ {q:"We _____ at the zoo last Sunday.",o:["was","were","are"],a:1},
+ {q:"Choose the correct sentence.",o:["He don't like milk.","He doesn't like milk.","He doesn't likes milk."],a:1},
+ {q:"A rabbit has long _____.",o:["Ears","Wings","Fins"],a:0},
+ {q:"The book is _____ the two bags.",o:["between","during","quickly"],a:0},
+ {q:"What is the past tense of 'eat'?",o:["Eated","Ate","Eating"],a:1},
+ {q:"Which word is a noun?",o:["Happily","School","Beautiful"],a:1},
+ {q:"They _____ their homework every evening.",o:["does","do","doing"],a:1},
+ {q:"Choose the comparative adjective.",o:["Tall","Taller","Tallest"],a:1},
+ {q:"The sun rises in the _____.",o:["West","North","East"],a:2},
+ {q:"Which word means the same as 'begin'?",o:["Start","Finish","Stop"],a:0},
+ {q:"My father _____ a new car last year.",o:["buy","buys","bought"],a:2},
+ {q:"I was tired, _____ I finished my work.",o:["but","because","or"],a:0},
+ {q:"A place where we borrow books is a _____.",o:["Library","Hospital","Market"],a:0},
+ {q:"Which sentence is in the present continuous tense?",o:["She reads every day.","She is reading now.","She read yesterday."],a:1},
+ {q:"The children are playing _____ the playground.",o:["in","during","between"],a:0},
+ {q:"Choose the correct possessive adjective.",o:["This is me pencil.","This is my pencil.","This is I pencil."],a:1},
+ {q:"What is the opposite of 'dangerous'?",o:["Safe","Wild","Strong"],a:0},
+ {q:"A baby dog is called a _____.",o:["Kitten","Puppy","Calf"],a:1},
+ {q:"Which word is spelled correctly?",o:["Frend","Friend","Freind"],a:1},
+ {q:"There isn't _____ milk in the fridge.",o:["some","any","many"],a:1},
+ {q:"_____ is your birthday?",o:["When","Who","Whose"],a:0},
+ {q:"The opposite of 'noisy' is _____.",o:["Quiet","Loud","Busy"],a:0},
+ {q:"If today is Monday, tomorrow is _____.",o:["Sunday","Tuesday","Wednesday"],a:1},
+ {q:"Which word is an adverb?",o:["Carefully","Careful","Care"],a:0},
+ {q:"Choose the correct sentence.",o:["They was happy.","They were happy.","They is happy."],a:1},
+ {q:"A person who treats sick people is a _____.",o:["Pilot","Doctor","Baker"],a:1},
+ {q:"The opposite of 'expensive' is _____.",o:["Cheap","Costly","Rich"],a:0},
+ {q:"Choose the correct spelling.",o:["Necessary","Neccessary","Necesary"],a:0},
+ {q:"The children _____ in the garden yesterday.",o:["play","plays","played"],a:2},
+ {q:"Which word is a conjunction?",o:["And","Beautiful","Slowly"],a:0},
+ {q:"There are _____ oranges in the basket.",o:["much","many","any"],a:1},
+ {q:"A place where we see many animals is a _____.",o:["Zoo","Bank","Bakery"],a:0},
+ {q:"Choose the correct question.",o:["Where you live?","Where do you live?","Where does you live?"],a:1},
+ {q:"What is the past tense of 'go'?",o:["Goed","Gone","Went"],a:2},
+ {q:"Which is a complete sentence?",o:["The little brown dog.","The dog barked loudly.","Because it was raining."],a:1},
+ {q:"My sister is _____ than me.",o:["young","younger","youngest"],a:1},
+ {q:"The opposite of 'strong' is _____.",o:["Weak","Brave","Tall"],a:0},
+ {q:"Choose the correct article: _____ apple a day.",o:["A","An","Some"],a:1},
+ {q:"The boys _____ playing when it started to rain.",o:["was","were","is"],a:1},
+ {q:"Which word is a pronoun?",o:["They","Garden","Running"],a:0},
+ {q:"I brush my teeth _____ the morning.",o:["on","in","at"],a:1},
+ {q:"What is the opposite of 'borrow'?",o:["Lend","Keep","Take"],a:0},
+ {q:"Choose the correct spelling.",o:["Environment","Enviroment","Environmant"],a:0},
+ {q:"The elephant is _____ than the mouse.",o:["smaller","bigger","shorter"],a:1},
+ {q:"Choose the correct sentence.",o:["She can swims.","She can swim.","She cans swim."],a:1},
+ {q:"We use our _____ to smell.",o:["Eyes","Nose","Ears"],a:1},
+ {q:"The train arrived _____ 8 o'clock.",o:["at","in","on"],a:0},
+ {q:"What is the opposite of 'always'?",o:["Often","Never","Usually"],a:1},
+ {q:"Which word is a proper noun?",o:["city","Malaysia","country"],a:1},
+ {q:"Choose the correct past tense.",o:["They eat dinner yesterday.","They ate dinner yesterday.","They eating dinner yesterday."],a:1},
+ {q:"A person who flies an aeroplane is a _____.",o:["Pilot","Chef","Dentist"],a:0},
+ {q:"Which word rhymes with 'light'?",o:["Night","Late","Lot"],a:0},
+ {q:"The pupils _____ listening to their teacher.",o:["is","are","was"],a:1},
+ {q:"Choose the correct possessive form.",o:["Amir's bag","Amirs bag","Amirs' bag"],a:0},
+ {q:"What is the plural of 'tooth'?",o:["Tooths","Teeth","Teeths"],a:1},
+ {q:"I stayed at home _____ I was sick.",o:["because","but","or"],a:0},
+ {q:"Which word describes how someone feels?",o:["Excited","Table","Quickly"],a:0},
+ {q:"The opposite of 'empty' is _____.",o:["Full","Open","Small"],a:0},
+ {q:"Choose the correct sentence.",o:["There are a bird.","There is a bird.","There am a bird."],a:1},
+ {q:"What is the past tense of 'write'?",o:["Writed","Wrote","Writing"],a:1},
+ {q:"A place where you can buy medicine is a _____.",o:["Pharmacy","Stadium","Museum"],a:0},
+ {q:"Which word means 'very small'?",o:["Huge","Tiny","Wide"],a:1},
+ {q:"The children are _____ a story now.",o:["read","reads","reading"],a:2},
+ {q:"Choose the correct question word: _____ is your best friend?",o:["Who","When","Where"],a:0},
+ {q:"Which word is spelled correctly?",o:["Wednesday","Wensday","Wednsday"],a:0},
+ {q:"The opposite of 'kind' is _____.",o:["Friendly","Cruel","Helpful"],a:1},
+ {q:"A person who makes bread is a _____.",o:["Baker","Farmer","Nurse"],a:0},
+ {q:"Choose the correct preposition: The picture is _____ the wall.",o:["on","between","during"],a:0},
+ {q:"I _____ my homework before dinner yesterday.",o:["finish","finished","finishes"],a:1},
+ {q:"Which word is a conjunction?",o:["Although","Slowly","Garden"],a:0},
+ {q:"The baby is sleeping. Please be _____.",o:["quiet","noisy","careless"],a:0},
+ {q:"What is the opposite of 'remember'?",o:["Forget","Recall","Learn"],a:0},
+ {q:"Which sentence uses capital letters correctly?",o:["my name is Ali.","My name is Ali.","My Name Is Ali."],a:1},
+ {q:"Choose the correct word: There are _____ books on the shelf.",o:["much","a little","several"],a:2},
+ {q:"The opposite of 'polite' is _____.",o:["Rude","Gentle","Helpful"],a:0},
+ {q:"A person who puts out fires is a _____.",o:["Firefighter","Librarian","Waiter"],a:0},
+ {q:"Choose the correct sentence.",o:["I have seen that movie.","I has seen that movie.","I having seen that movie."],a:0},
+ {q:"The children _____ to the museum tomorrow.",o:["went","will go","goes yesterday"],a:1},
+ {q:"What is the opposite of 'arrive'?",o:["Reach","Depart","Enter"],a:1},
+ {q:"Choose the correct spelling.",o:["Favourite","Favoritte","Favrite"],a:0},
+ {q:"The soup is too hot. Let it _____.",o:["cool","cold","cooling"],a:0},
+ {q:"Which word means 'to look carefully'?",o:["Observe","Forget","Shout"],a:0},
+ {q:"The students must _____ their homework.",o:["does","do","doing"],a:1},
+ {q:"Which sentence is a command?",o:["Please close the door.","Where is the door?","The door is open."],a:0},
+ {q:"Choose the correct superlative adjective.",o:["Tall","Taller","Tallest"],a:2}
+];
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W=innerWidth,H=innerHeight,DPR=1;
+let level=1,score=0,birdsUsed=0,correctAnswers=0;
+let levelScore=0,levelBirds=0,levelCorrect=0;
+let capybaras=[],blocks=[],bird=null,particles=[];
+let dragging=false,dragStart={x:0,y:0},dragPoint={x:0,y:0};
+let gameState="START",birdType="normal",question=null;
+let questionUsed=new Set(),levelResults=[];
+let animationId=0,lastTime=0,shotCount=0;
+let pausedState="";
+
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR;
+  canvas.style.width=W+"px";canvas.style.height=H+"px";
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(gameState==="PLAY"||gameState==="FLY") buildScene();
+}
+window.addEventListener("resize",resize);
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));
+  if(id)document.getElementById(id).classList.remove("hidden");
+}
+function updateHUD(){
+  document.getElementById("level").textContent=level;
+  document.getElementById("score").textContent=score;
+  document.getElementById("birds").textContent=birdsUsed;
+}
+function say(text){
+  document.getElementById("message").textContent=text;
+}
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function startGame(){
+  level=1;score=0;birdsUsed=0;correctAnswers=0;levelResults=[];
+  startLevel();
+}
+function startLevel(){
+  birdsUsed=0;levelBirds=0;levelCorrect=0;levelScore=0;
+  shotCount=0;questionUsed.clear();
+  buildScene();updateHUD();
+  document.getElementById("levelTitle").textContent="LEVEL "+level;
+  document.getElementById("levelDescription").textContent=
+    ["Warm-up Castle","The Wooden Tower","The Stone Fortress","The Twin Towers",
+     "The Big Courtyard","The High Castle","The Golden Tower","The Final Bridge",
+     "The Royal Fortress","The Capybara Kingdom"][level-1]||"Defeat the capybaras!";
+  gameState="INTRO";
+  showScreen("levelScreen");
+}
+function beginLevel(){
+  showScreen(null);gameState="PLAY";
+  say("Answer the English question before every launch!");
+  askQuestion();draw();
+}
+function buildScene(){
+  const ground=H-55;
+  const scale=Math.min(W/900,H/560);
+  const castleX=W*0.70;
+  const count=Math.min(3+Math.floor((level-1)/2),7);
+  capybaras=[];blocks=[];particles=[];
+  const baseY=ground-10;
+  const baseX=castleX;
+  const bw=Math.max(26,Math.min(54,W/17));
+  for(let i=0;i<count;i++){
+    const row=Math.floor(i/3);
+    const col=i%3;
+    capybaras.push({
+      x:baseX+col*(bw+8),y:baseY-row*(bw+12)-bw/2,
+      r:bw*.43,alive:true,vx:0,vy:0,rotation:0
+    });
+  }
+  const towers=1+Math.floor((level-1)/3);
+  for(let t=0;t<towers;t++){
+    const tx=baseX-20+t*(bw*2+20);
+    blocks.push({x:tx,y:baseY-bw*1.15,w:14,h:bw*2.3,alive:true});
+    blocks.push({x:tx+bw+10,y:baseY-bw*1.15,w:14,h:bw*2.3,alive:true});
+    blocks.push({x:tx+bw/2+2,y:baseY-bw*2.3,w:bw+10,h:14,alive:true});
+  }
+  bird=null;dragging=false;
+}
+function drawBackground(){
+  const g=H-55;
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,"#76d1ff");sky.addColorStop(.68,"#e8f8ff");sky.addColorStop(1,"#d2efad");
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  // Clouds
+  ctx.fillStyle="#ffffffbb";
+  for(let i=0;i<4;i++){
+    const x=(W*(i/3)+80)%W,y=85+(i%2)*55;
+    ctx.beginPath();ctx.arc(x,y,23,0,Math.PI*2);
+    ctx.arc(x+25,y-9,29,0,Math.PI*2);
+    ctx.arc(x+52,y,22,0,Math.PI*2);ctx.fill();
+  }
+  // Hills
+  ctx.fillStyle="#a4dc83";
+  ctx.beginPath();ctx.moveTo(0,g-70);
+  ctx.quadraticCurveTo(W*.25,g-150,W*.5,g-60);
+  ctx.quadraticCurveTo(W*.8,g-150,W,g-80);
+  ctx.lineTo(W,g);ctx.lineTo(0,g);ctx.fill();
+  ctx.fillStyle="#66bd65";ctx.fillRect(0,g,W,H-g);
+  ctx.fillStyle="#45984e";ctx.fillRect(0,g+9,W,7);
+  ctx.fillStyle="#b88a51";ctx.fillRect(0,g+16,W,H-g-16);
+  ctx.fillStyle="#e1bd7a";
+  for(let i=0;i<30;i++)ctx.fillRect((i*71)%W,g+23+(i%4)*7,13,3);
+}
+function roundRect(x,y,w,h,r,fill,stroke){
+  ctx.beginPath();ctx.roundRect(x,y,w,h,r);
+  ctx.fillStyle=fill;ctx.fill();
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke();}
+}
+function drawCastle(){
+  const g=H-55;
+  const x=W*.70;
+  roundRect(x-40,g-22,W*.29,22,4,"#a66b35","#71421f");
+  for(let i=0;i<blocks.length;i++){
+    const b=blocks[i];if(!b.alive)continue;
+    roundRect(b.x,b.y,b.w,b.h,3,"#c89151","#885324");
+    ctx.strokeStyle="#e6bc78";ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(b.x+3,b.y+8);ctx.lineTo(b.x+b.w-3,b.y+8);ctx.stroke();
+  }
+  // Castle flags
+  ctx.fillStyle="#a33f3f";
+  ctx.beginPath();ctx.moveTo(x-15,g-160);ctx.lineTo(x+14,g-160);ctx.lineTo(x-15,g-142);ctx.fill();
+  ctx.fillStyle="#8a5429";
+  for(let i=0;i<4;i++)roundRect(x-35+i*45,g-18,31,18,2,"#e2c17d","#99632c");
+}
+function drawCapy(c){
+  if(!c.alive)return;
+  ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.rotation||0);
+  // body
+  ctx.fillStyle="#b9824d";ctx.beginPath();ctx.ellipse(0,0,c.r*1.2,c.r*.85,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#d6a36d";ctx.beginPath();ctx.ellipse(c.r*.48,c.r*.18,c.r*.52,c.r*.43,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#754522";
+  ctx.beginPath();ctx.arc(-c.r*.35,-c.r*.58,c.r*.22,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(c.r*.28,-c.r*.6,c.r*.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#2e2118";ctx.beginPath();ctx.arc(c.r*.55,-c.r*.04,c.r*.075,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(c.r*.95,c.r*.16,c.r*.09,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="#754522";ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(c.r*.63,c.r*.34);ctx.quadraticCurveTo(c.r*.8,c.r*.43,c.r*.96,c.r*.31);ctx.stroke();
+  ctx.restore();
+}
+function drawBird(x,y,type,r=18){
+  ctx.save();ctx.translate(x,y);
+  const colors={normal:"#e64b43",bomb:"#282b37",split:"#5aa6ed",speed:"#ffd44d"};
+  ctx.fillStyle=colors[type]||colors.normal;
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="#7a3527";ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.ellipse(5,-5,6,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#24201c";ctx.beginPath();ctx.arc(7,-5,2.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#eaa82e";ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(21,3);ctx.lineTo(10,7);ctx.fill();
+  if(type==="bomb"){
+    ctx.fillStyle="#f4c33d";ctx.beginPath();ctx.arc(-5,-10,4,0,Math.PI*2);ctx.fill();
+  }
+  if(type==="split"){
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(-6,6,3,0,Math.PI*2);ctx.fill();
+  }
+  if(type==="speed"){
+    ctx.strokeStyle="#fff";ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(-r-9,-6);ctx.lineTo(-r+1,-6);
+    ctx.moveTo(-r-11,1);ctx.lineTo(-r+1,1);ctx.stroke();
+  }
+  ctx.restore();
+}
+function draw(){
+  if(!ctx)return;
+  drawBackground();drawCastle();
+  capybaras.forEach(drawCapy);
+  const g=H-55;
+  const slingX=W*.22,slingY=g-75;
+  // Slingshot
+  ctx.strokeStyle="#744321";ctx.lineWidth=10;ctx.lineCap="round";
+  ctx.beginPath();ctx.moveTo(slingX-8,g-10);ctx.lineTo(slingX,slingY);
+  ctx.lineTo(slingX+16,g-10);ctx.stroke();
+  ctx.strokeStyle="#b98646";ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(slingX-8,g-10);ctx.lineTo(slingX,slingY);
+  ctx.lineTo(slingX+16,g-10);ctx.stroke();
+  if(bird&&bird.alive){
+    if(dragging){
+      ctx.strokeStyle="#754421";ctx.lineWidth=4;
+      ctx.beginPath();ctx.moveTo(slingX,slingY);ctx.lineTo(bird.x,bird.y);ctx.stroke();
+      ctx.setLineDash([5,7]);ctx.strokeStyle="#ffffffdd";ctx.lineWidth=2;
+      for(let i=1;i<=7;i++){
+        const t=i/8;
+        ctx.beginPath();ctx.arc(bird.x+(slingX-bird.x)*t*1.5,
+          bird.y+(slingY-bird.y)*t*1.5+5*t*t*40,3,0,Math.PI*2);ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+    drawBird(bird.x,bird.y,bird.type,bird.r);
+  }else if(gameState==="PLAY"){
+    drawBird(slingX,slingY,"normal",18);
+  }
+  particles.forEach(p=>{
+    ctx.globalAlpha=Math.max(0,p.life);
+    ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+  });
+  if(gameState==="FLY"&&bird&&bird.alive)updateBird();
+  if(gameState==="PLAY"||gameState==="FLY"||gameState==="SETTLE"){
+    animationId=requestAnimationFrame(draw);
+  }
+}
+
+/* =========================================================
+   QUESTION FLOW
+========================================================= */
+function askQuestion(){
+  if(gameState==="END")return;
+  gameState="QUESTION";
+  if(questionUsed.size>=QUESTIONS.length)questionUsed.clear();
+  let index;
+  do{index=Math.floor(Math.random()*QUESTIONS.length);}
+  while(questionUsed.has(index));
+  questionUsed.add(index);
+  question=QUESTIONS[index];
+  document.getElementById("questionText").textContent=question.q;
+  document.getElementById("feedback").textContent="";
+  const options=document.getElementById("options");
+  options.innerHTML="";
+  const order=shuffle([0,1,2]);
+  order.forEach(i=>{
+    const b=document.createElement("button");
+    b.className="option";
+    b.textContent=question.o[i];
+    b.onclick=()=>answerQuestion(i,b);
+    options.appendChild(b);
+  });
+  showScreen("questionScreen");
+}
+function answerQuestion(index,button){
+  if(gameState!=="QUESTION")return;
+  gameState="ANSWERED";
+  const correct=index===question.a;
+  document.querySelectorAll(".option").forEach((b,i)=>{
+    b.disabled=true;
+    const originalText=b.textContent;
+    if(originalText===question.o[question.a])b.classList.add("correct");
+  });
+  if(!correct)button.classList.add("wrong");
+  const feedback=document.getElementById("feedback");
+  if(correct){
+    feedback.textContent="🎉 Correct! You earned a power bird!";
+    feedback.style.color="#21843b";
+    birdType=["bomb","split","speed"][Math.floor(Math.random()*3)];
+    levelCorrect++;correctAnswers++;
+    setTimeout(()=>prepareBird(),900);
+  }else{
+    feedback.textContent="Not quite! Answer: "+question.o[question.a];
+    feedback.style.color="#c0392b";
+    birdType="normal";
+    setTimeout(()=>prepareBird(),1500);
+  }
+}
+function prepareBird(){
+  if(gameState!=="ANSWERED")return;
+  showScreen(null);gameState="PLAY";
+  bird=null;
+  const x=W*.22,y=H-130;
+  bird={x,y,vx:0,vy:0,r:18,type:birdType,alive:true,launched:false};
+  say(birdType==="normal"?"Normal bird ready! Drag backwards to aim.":"✨ POWER BIRD: "+birdType.toUpperCase()+"! Drag backwards to aim.");
+  draw();
+}
+
+/* =========================================================
+   LAUNCH AND COLLISIONS
+========================================================= */
+function pointerPosition(e){
+  const rect=canvas.getBoundingClientRect();
+  return{x:e.clientX-rect.left,y:e.clientY-rect.top};
+}
+canvas.addEventListener("pointerdown",e=>{
+  if(gameState!=="PLAY"||!bird||bird.launched)return;
+  const p=pointerPosition(e);
+  if(Math.hypot(p.x-bird.x,p.y-bird.y)<55){
+    dragging=true;dragStart={x:bird.x,y:bird.y};dragPoint=p;
+    canvas.setPointerCapture(e.pointerId);
+  }
+});
+canvas.addEventListener("pointermove",e=>{
+  if(!dragging||!bird)return;
+  const p=pointerPosition(e);
+  const sx=W*.22,sy=H-130;
+  let dx=p.x-sx,dy=p.y-sy;
+  const max=105,d=Math.hypot(dx,dy);
+  if(d>max){dx=dx/d*max;dy=dy/d*max;}
+  bird.x=sx+dx;bird.y=sy+dy;
+  draw();
+});
+canvas.addEventListener("pointerup",()=>{
+  if(!dragging||!bird)return;
+  dragging=false;
+  const sx=W*.22,sy=H-130;
+  const dx=sx-bird.x,dy=sy-bird.y;
+  if(Math.hypot(dx,dy)<12){
+    bird.x=sx;bird.y=sy;draw();return;
+  }
+  bird.vx=dx*.17;bird.vy=dy*.17;
+  bird.launched=true;gameState="FLY";
+  birdsUsed++;levelBirds++;shotCount++;updateHUD();
+  say("🚀 Nice shot! Knock down the capybaras!");
+  draw();
+});
+canvas.addEventListener("pointercancel",()=>{dragging=false;});
+
+function addParticles(x,y,color,count=10){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2,s=1+Math.random()*5;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:2+Math.random()*4,life:1,color});
+  }
+}
+function updateBird(){
+  if(!bird||!bird.alive)return;
+  const g=H-55;
+  bird.vy+=0.25;
+  bird.x+=bird.vx;bird.y+=bird.vy;
+  bird.vx*=.995;
+  // Hit blocks
+  for(const b of blocks){
+    if(!b.alive)continue;
+    if(bird.x> b.x-bird.r&&bird.x<b.x+b.w+bird.r&&
+       bird.y>b.y-bird.r&&bird.y<b.y+b.h+bird.r){
+      b.alive=false;
+      addParticles(bird.x,bird.y,"#c28b4b",9);
+      bird.vx*=.7;bird.vy*=.7;
+      score+=5;levelScore+=5;updateHUD();
+    }
+  }
+  // Hit capybaras
+  for(const c of capybaras){
+    if(!c.alive)continue;
+    const d=Math.hypot(bird.x-c.x,bird.y-c.y);
+    if(d<bird.r+c.r){
+      c.alive=false;addParticles(c.x,c.y,"#d29a63",18);
+      score+=20;levelScore+=20;updateHUD();
+      if(bird.type==="bomb"){
+        addParticles(bird.x,bird.y,"#ff9d3d",28);
+        capybaras.forEach(other=>{
+          if(other.alive&&Math.hypot(other.x-bird.x,other.y-bird.y)<120){
+            other.alive=false;addParticles(other.x,other.y,"#d29a63",14);
+            score+=20;levelScore+=20;
+          }
+        });
+      }
+      if(bird.type==="split"){
+        for(let k=0;k<2;k++){
+          const near=capybaras.find(o=>o.alive);
+          if(near&&Math.hypot(near.x-bird.x,near.y-bird.y)<150){
+            near.alive=false;addParticles(near.x,near.y,"#d29a63",14);
+            score+=20;levelScore+=20;
+          }
+        }
+      }
+      if(bird.type==="speed"){bird.vx*=1.5;bird.vy*=1.2;}
+    }
+  }
+  particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.life-=.025;
+  });
+  particles=particles.filter(p=>p.life>0);
+  if(bird.y>g+100||bird.x>W+100||bird.x<-100||bird.y<-200){
+    bird.alive=false;finishShot();
+  }
+  if(bird.alive&&Math.hypot(bird.vx,bird.vy)<.8){
+    if(!bird.slowSince)bird.slowSince=performance.now();
+    if(performance.now()-bird.slowSince>1500){bird.alive=false;finishShot();}
+  }else if(bird.alive)bird.slowSince=0;
+}
+function finishShot(){
+  if(gameState!=="FLY")return;
+  gameState="SETTLE";
+  if(capybaras.every(c=>!c.alive)){
+    setTimeout(finishLevel,600);return;
+  }
+  setTimeout(()=>{
+    if(gameState!=="SETTLE")return;
+    bird=null;gameState="PLAY";
+    askQuestion();
+  },700);
+}
+
+/* =========================================================
+   LEVEL RESULTS AND NAVIGATION
+========================================================= */
+function finishLevel(){
+  gameState="END";
+  const stars=birdsUsed<=3?3:birdsUsed<=6?2:1;
+  const bonus=Math.max(10,110-10*birdsUsed);
+  score+=bonus;levelScore+=bonus;
+  levelResults[level-1]={
+    level,score:levelScore,birds:levelBirds,correct:levelCorrect,stars
+  };
+  updateHUD();
+  document.getElementById("endMascot").textContent=stars===3?"🏆 ⭐⭐⭐":stars===2?"🥈 ⭐⭐":"🥉 ⭐";
+  document.getElementById("endTitle").textContent="LEVEL "+level+" COMPLETE!";
+  document.getElementById("endText").textContent=
+    "All capybaras have been defeated! Bonus points: "+bonus;
+  document.getElementById("endScore").textContent=levelScore;
+  document.getElementById("endBirds").textContent=levelBirds;
+  document.getElementById("endCorrect").textContent=levelCorrect;
+  const next=document.getElementById("nextButton");
+  next.textContent=level>=10?"🏆 FINISH GAME":"NEXT LEVEL ➜";
+  showScreen("endScreen");
+}
+function nextLevel(){
+  if(level>=10){
+    showReport();return;
+  }
+  level++;startLevel();
+}
+function restartLevel(){startLevel();}
+function openMenu(){
+  pausedState=gameState;
+  showScreen("menuScreen");
+}
+function resumeGame(){
+  showScreen(null);
+  if(pausedState==="QUESTION"){askQuestion();return;}
+  if(pausedState==="FLY"||pausedState==="PLAY"||pausedState==="SETTLE"){
+    gameState=bird&&bird.alive&&bird.launched?"FLY":"PLAY";
+    draw();return;
+  }
+  gameState="PLAY";askQuestion();
+}
+function backToStart(){
+  gameState="START";showScreen("startScreen");
+}
+function showReport(){
+  const list=document.getElementById("reportList");
+  list.innerHTML="";
+  let total=0,won=0;
+  for(let i=0;i<10;i++){
+    const r=levelResults[i];
+    const div=document.createElement("div");
+    if(r){
+      total+=r.score;won++;
+      div.textContent="Level "+r.level+" — "+r.score+" points · "+r.birds+
+        " birds · "+r.correct+" correct · "+"⭐".repeat(r.stars);
+    }else{
+      div.textContent="Level "+(i+1)+" — Not completed";
+    }
+    list.appendChild(div);
+  }
+  document.getElementById("totalScore").textContent=total;
+  document.getElementById("levelsWon").textContent=won;
+  showScreen("reportScreen");
+  gameState="REPORT";
+}
+function closeReport(){
+  if(levelResults[level-1]){
+    showScreen("endScreen");gameState="END";
+  }else{
+    showScreen(null);gameState="PLAY";askQuestion();
+  }
+}
+
+/* =========================================================
+   INITIALISE
+========================================================= */
+function loop(){
+  if(gameState==="PLAY"||gameState==="FLY"||gameState==="SETTLE")draw();
+  animationId=requestAnimationFrame(loop);
+}
+resize();
+buildScene();
+updateHUD();
+showScreen("startScreen");
+loop();
+</script>
+</body>
+</html>
